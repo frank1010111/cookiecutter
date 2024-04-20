@@ -54,9 +54,17 @@ class RTD102(ReadTheDocs):
     @staticmethod
     def check(readthedocs: dict[str, Any]) -> bool:
         """
-        You must set `build: image: ubuntu-22.04` or similar in the
+        You must set `build: os: ubuntu-22.04` or similar in the
         `.readthedocs.yaml` file.  Otherwise, you will get old, unsupported
         versions of software for backward compatibility.
+        [Suggestion](https://docs.readthedocs.io/en/stable/config-file/v2.html):
+
+        ```yaml
+        build:
+          os: ubuntu-22.04
+          tools:
+            python: "3.11"
+        ```
         """
 
         match readthedocs:
@@ -76,6 +84,13 @@ class RTD103(ReadTheDocs):
         """
         You must set `build: tools: python: "3.11"` or similar in the
         `.readthedocs.yaml` file for a Python project.
+
+        ```yaml
+        build:
+          os: ubuntu-22.04
+          tools:
+            python: "3.11"
+        ```
         """
 
         match readthedocs:

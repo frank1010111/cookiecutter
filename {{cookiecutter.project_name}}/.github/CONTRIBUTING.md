@@ -1,7 +1,7 @@
 See the [Scientific Python Developer Guide][spc-dev-intro] for a detailed
 description of best practices for developing scientific packages.
 
-[spc-dev-intro]: https://scientific-python-cookie.readthedocs.io/guide/intro
+[spc-dev-intro]: https://learn.scientific-python.org/development/
 
 # Quick development
 
@@ -19,7 +19,7 @@ specific jobs:
 ```console
 $ nox -s lint  # Lint only
 $ nox -s tests  # Python tests
-$ nox -s docs -- serve  # Build and serve the docs
+$ nox -s docs -- --serve  # Build and serve the docs
 $ nox -s build  # Make an SDist and wheel
 ```
 
@@ -95,7 +95,7 @@ nox -s docs
 You can see a preview with:
 
 ```bash
-nox -s docs -- serve
+nox -s docs -- --serve
 ```
 
 # Pre-commit

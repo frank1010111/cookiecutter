@@ -12,14 +12,15 @@ parent: Topical Guides
 
 The libraries in the scientific Python ecosytem have a variety of different
 packaging styles, but this document is intended to outline a recommended style
-that new packages should follow, and existing packages should slowly adopt. The
-reasoning for each decision is outlined as well.
+that existing packages should slowly adopt. The reasoning for each decision is
+outlined as well.
 
-There are currently several popular packaging systems. This guide covers
-[Setuptools][], which is currently the only system that supports compiled
-extensions. If you are not planning on writing C/C++ code, other systems like
-[Hatch][] are drastically simpler - most of this page is unneeded for those
-systems.
+There are several popular packaging systems. This guide covers [Setuptools][],
+which is the oldest system and supports compiled extensions. If you are not
+working on legacy code or are willing to make a larger change, other systems
+like [Hatch][] are drastically simpler - most of this page is unneeded for those
+systems. Even setuptools supports modern config now, though setup.py is still
+also required for compiled packages to be supported.
 
 Also see the [Python packaging guide][], especially the [Python packaging
 tutorial][].
@@ -81,14 +82,10 @@ have dev instructions on how to install requirements needed to run `setup.py`.
 
 You can also use this to select your entire build system; we use setuptools
 above but you can also use others, such as [Flit][] or [Poetry][]. This is
-possible due to the `build-backend` selection, as described in PEP 517.
-Scientific Python packages don't often use these since they usually do not allow
-binary packages to be created and a few common developer needs, like editable
-installs, look slightly different (a way to include editable installs in PEP 517
-is being worked on). Usage of these "[hypermodern][]" packaging tools are
-generally not found in scientific Python packages, but not discouraged; all
-tools build the same wheels (and they often build setuptools compliant SDists,
-as well).
+possible due to the `build-backend` selection, as described in PEP 517. Usage of
+these "[hypermodern][]" packaging tools is growing in scientific Python
+packages. All tools build the same wheels (and they often build setuptools
+compliant SDists, as well).
 
 {% rr PP003 %} Note that `"wheel"` is never required; it is injected
 automatically by setuptools only when needed.
@@ -97,7 +94,7 @@ automatically by setuptools only when needed.
 
 You may want to build against NumPy (mostly for Cython packages, pybind11 does
 not need to access the NumPy headers). This is the recommendation for scientific
-Python packages:
+Python packages supporting older versions of NumPy:
 
 ```toml
 requires = [
@@ -112,6 +109,19 @@ developers that tracks the
 [correct version of NumPy to build wheels against for each version of Python and for each OS/implementation](https://github.com/scipy/oldest-supported-numpy/blob/master/setup.cfg).
 Otherwise, you would have to list the earliest version of NumPy that had support
 for each Python version here.
+
+{: .note }
+
+> Modern versions of NumPy (1.25+) allow you to target older versions when
+> building, which is _highly_ recommended, and this will become required in
+> NumPy 2.0. Now you add:
+>
+> ```cpp
+> #define NPY_TARGET_VERSION NPY_1_22_API_VERSION
+> ```
+>
+> (Where that number is whatever version you support as a minimum) then make
+> sure you build with NumPy 1.25+ (or 2.0+ when it comes out).
 
 ## Versioning (medium/high priority)
 
@@ -237,7 +247,7 @@ a simple file that includes a line with a simple PEP 440 style version, like
 version = attr: package._version.version
 ```
 
-Setuptools will look in the AST of `_verison.py` for a simple assignment; if
+Setuptools will look in the AST of `_version.py` for a simple assignment; if
 that works, it will not actually import your package during the setup phase
 (which is bad). Older versions of setuptools or complex version files will
 import your package; if it is not importable with the pyproject.toml
@@ -403,15 +413,15 @@ Python packaging goes through a 3-stage procedure if you have the above
 recommended `pyproject.toml` file. If you type `pip install .`, then
 
 1. Source is processed to make an SDist (in a virtual environment mandated by
-   pyproject.toml).
+   pyproject.toml). This SDist bears a `.tar.gz` file format.
 2. SDist is processed to make a wheel (same virtual environment).
 3. The wheel is installed.
 
 The wheel does _not_ contain `setup.*`, `pyproject.toml`, or other build code.
-It simply is a `.tar.gz` file that is named `.whl` and has a simple mapping of
-directories to installation paths and a generic metadata format. "Installing"
-really is just copying files around, and pip also pre-compiles some bytecode for
-you while doing so.
+It simply is a `.zip` format archive with the `.whl` suffix and has a simple
+mapping of directories to installation paths and a generic metadata format.
+"Installing" really is just copying files around, and pip also pre-compiles some
+bytecode for you while doing so.
 
 If you don't have a `MANIFEST.in`, the "legacy" build procedure will skip the
 SDist step, making it possible for a development build to work while a published
@@ -441,7 +451,7 @@ to add a `console_scripts` entry point. The form is:
 ```ini
 [options.entry_points]
 console_scripts =
-    cliapp = packakge.__main__:main
+    cliapp = package.__main__:main
 ```
 
 The format is command line app name as the key, and the value is the path to the
@@ -466,7 +476,7 @@ the app.
 [poetry]: https://python-poetry.org
 [hatch]: https://hatch.pypa.io
 [hypermodern]: https://cjolowicz.github.io/posts/hypermodern-python-01-setup/
-[setuptools_scm file]: https://github.com/pypa/setuptools_scm/#file-finders-hook-makes-most-of-manifestin-unnecessary
+[setuptools_scm file]: https://setuptools-scm.readthedocs.io/en/latest/usage/#file-finders-hook-makes-most-of-manifestin-unnecessary
 [manifest.in]: https://packaging.python.org/guides/using-manifest-in/
 [setuptools]: https://setuptools.readthedocs.io/en/latest/userguide/index.html
 [setuptools cfg]: https://setuptools.readthedocs.io/en/latest/userguide/declarative_config.html

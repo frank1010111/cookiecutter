@@ -132,39 +132,27 @@ with code_fence("meson"):
 <!-- prettier-ignore-start -->
 ```meson
 project(
-  'package',
-  'cpp',
-  version: '0.1.0',
-  license: 'BSD',
-  meson_version: '>= 0.64.0',
-  default_options: [
-    'buildtype=debugoptimized',
-    'cpp_std=c++11',
-  ],
-)
-name = 'package'
-
-py_mod = import('python')
-py = py_mod.find_installation(pure: false)
-
-pybind11_config = find_program('pybind11-config')
-pybind11_config_ret = run_command(pybind11_config, ['--includes'], check: true)
-pybind11 = declare_dependency(
-    include_directories: [pybind11_config_ret.stdout().split('-I')[-1].strip()],
+    'package',
+    'cpp',
+    version: '0.1.0',
+    license: 'BSD',
+    meson_version: '>= 1.1.0',
+    default_options: [
+        'cpp_std=c++11',
+    ],
 )
 
-install_subdir('src' / name, install_dir: py.get_install_dir() / name, strip_directory: true)
+py = import('python').find_installation(pure: false)
+pybind11_dep = dependency('pybind11')
 
 py.extension_module('_core',
     'src/main.cpp',
     subdir: 'package',
     install: true,
-    dependencies : [pybind11],
-    link_language : 'cpp',
-    override_options: [
-        'cpp_rtti=true',
-    ]
+    dependencies : [pybind11_dep],
 )
+
+install_subdir('src/package', install_dir: py.get_install_dir() / 'package', strip_directory: true)
 ```
 <!-- prettier-ignore-end -->
 <!-- [[[end]]] -->
@@ -237,8 +225,7 @@ PYBIND11_MODULE(_core, m) {
       Some other explanation about the add function.
   )pbdoc");
 
-  m.def(
-      "subtract", [](int i, int j) { return i - j; }, R"pbdoc(
+  m.def("subtract", [](int i, int j) { return i - j; }, R"pbdoc(
       Subtract two numbers
       Some other explanation about the subtract function.
   )pbdoc");
@@ -279,8 +266,7 @@ PYBIND11_MODULE(_core, m) {
       Some other explanation about the add function.
   )pbdoc");
 
-  m.def(
-      "subtract", [](int i, int j) { return i - j; }, R"pbdoc(
+  m.def("subtract", [](int i, int j) { return i - j; }, R"pbdoc(
       Subtract two numbers
       Some other explanation about the subtract function.
   )pbdoc");
@@ -346,6 +332,26 @@ though the defaults are reasonable.
 Unlike pure Python, you'll need to build redistributable wheels for each
 platform and supported Python version if you want to avoid compilation on the
 user's system. See [the CI page on wheels][gha_wheels] for a suggested workflow.
+
+## Special considerations
+
+### NumPy
+
+Modern versions of NumPy (1.25+) allow you to target older versions when
+building, which is _highly_ recommended, and this will become required in NumPy
+2.0. Now you add:
+
+```cpp
+#define NPY_TARGET_VERSION NPY_1_22_API_VERSION
+```
+
+(Where that number is whatever version you support as a minimum) then make sure
+you build with NumPy 1.25+ (or 2.0+ when it comes out). Before 1.25, it was
+necessary to actually pin the oldest NumPy you supported (the
+`oldest-supported-numpy` package is the easiest method). If you support Python <
+3.9, you'll have to use the old method for those versions.
+
+If using pybind11, you don't need NumPy at build-time in the first place.
 
 <!-- prettier-ignore-start -->
 

@@ -4,7 +4,6 @@ Copyright (c) {{ cookiecutter.__year }} {{ cookiecutter.full_name }}. All rights
 {{ cookiecutter.project_name }}: {{ cookiecutter.project_short_description }}
 """
 
-
 from __future__ import annotations
 
 {%- if cookiecutter.backend in ["setuptools", "pybind11", "hatch", "skbuild", "setuptools621", "flit"] and cookiecutter.vcs %}
@@ -27,4 +26,4 @@ __version__ = "0.1.0"
 
 {%- endif %}
 
-__all__ = ("__version__",)
+__all__ = ["__version__"]

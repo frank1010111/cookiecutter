@@ -59,11 +59,11 @@ lint:
   name: Lint
   runs-on: ubuntu-latest
   steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: "3.x"
-    - uses: pre-commit/action@v3.0.0
+    - uses: pre-commit/action@v3.0.1
 ```
 
 {% endraw %}
@@ -97,12 +97,12 @@ tests:
         - "3.12"
   name: Check Python ${{ matrix.python-version }}
   steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0 # Only needed if using setuptools-scm
 
     - name: Setup Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
@@ -142,14 +142,20 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      actions:
+        patterns:
+          - "*"
 ```
 
 This will check to see if there are updates to the action weekly, and will make
 a PR if there are updates, including the changelog and commit summary in the PR.
 If you select a name like `v1`, this should only look for updates of the same
 form (since April 2022) - there is no need to restrict updates for "moving tag"
-updates anymore {% rr PY006 %}. You can also use SHA's and dependabot will
-respect that too.
+updates anymore {% rr GH211 %}. You can also use SHA's and dependabot will
+respect that too. And `groups` will combine actions updates {% rr GH212 %},
+which is both cleaner and sometimes required for dependent actions, like
+`upload-artifact`/`download-artifact`.
 
 You can use this for other ecosystems too, including Python.
 
@@ -255,12 +261,21 @@ And many other useful ones:
   built-in caching.
 - [conda-incubator/setup-miniconda](https://github.com/conda-incubator/setup-miniconda):
   Setup conda or mamba on GitHub Actions.
+- [prefix-dev/setup-pixi](https://github.com/prefix-dev/setup-pixi): Set up pixi
+  and install your environment(s). Try `cache: false` if saving/loading the
+  cache is slow.
 - [ruby/setup-ruby](https://github.com/ruby/setup-ruby): Setup Ruby if you need
   it for something.
 - [peter-evans/create-pull-request](https://github.com/peter-evans/create-pull-request):
   Make a new PR with the current changes (more options than just using `gh`).
   You can even auto-merge PRs with `run: gh pr merge --merge --auto "1"`
   afterwards.
+- [yezz123/setup-uv](https://github.com/yezz123/setup-uv): Set up `uv`. Has a
+  handy `uv-venv` option that will also set up and activate a virtual
+  environment for you.
+- [gautamkrishnar/keepalive-workflow](https://github.com/gautamkrishnar/keepalive-workflow):
+  Keep GitHub actions alive for more than 60 days. Not usually needed if you've
+  set up the other suggestions here, like dependabot and pre-commit.
 
 A couple more from Python developers; note these do not provide `vX` moving tags
 like the official actions and most other actions, but instead have `release/vX`
@@ -270,6 +285,8 @@ branches that you can use.
   Publish Python packages to PyPI. Supports trusted publisher deployment.
 - [re-actors/alls-green](https://github.com/re-actors/alls-green): Tooling to
   check to see if all jobs passed (supports allowed failures, too).
+- [sigstore/gh-action-sigstore-python](https://github.com/sigstore/gh-action-sigstore-python):
+  Signing files in GitHub Actions with sigstore.
 
 There are also a few useful tools installed which can really simplify your
 workflow or adding custom actions. This includes system package managers (like
@@ -341,7 +358,7 @@ list; this tells it what is required.
 
 We use `re-actors/alls-green` to evaluate whether required jobs have passed. You
 need to tell it what jobs are required, which you can do without repeating the
-needs list by taking the `needs` list and inputing it as json to `with: jobs:`.
+needs list by taking the `needs` list and inputting it as json to `with: jobs:`.
 
 This will also support jobs that are allowed to fail (`allowed-failures:`) and
 allowed to be skipped (`allowed-skips:`) too.
@@ -395,7 +412,7 @@ Python version might come as a surprise. You can do that, though, using
 {% raw %}
 
 ```yaml
-- uses: actions/setup-python@v4
+- uses: actions/setup-python@v5
   id: python
   with:
     python-version: "3.11"
@@ -493,12 +510,12 @@ jobs:
       # more here if you have more situations to detect
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Changed test-related files
         if: github.event_name == 'pull_request'
         id: changed-tests-files
-        uses: Ana06/get-changed-files@v2.2.0
+        uses: Ana06/get-changed-files@v2.3.0
         with:
           format: "json"
           filter: |
@@ -531,7 +548,7 @@ there are returned files, we set `run-tests=true`; otherwise, we don't (if we
 are in a PR and there were no matches).
 
 Everything else in the job is about getting the output from the step
-`changed-tests-files` to `tests-changes`, then from there into the resusable
+`changed-tests-files` to `tests-changes`, then from there into the reusable
 workflow output as `run-tests`.
 
 {: .note }
@@ -639,7 +656,7 @@ configure Pages.
 ```yaml
 - name: Setup Pages
   id: pages
-  uses: actions/configure-pages@v3
+  uses: actions/configure-pages@v5
 ```
 
 {% raw %}
@@ -654,7 +671,7 @@ this action later; specifically, may want to use
 
 ```yaml
 - name: Upload artifact
-  uses: actions/upload-pages-artifact@v2
+  uses: actions/upload-pages-artifact@v3
 ```
 
 This actions defaults to uploading `_site`, but you can give any `with: path:`
@@ -676,7 +693,7 @@ deploy:
   steps:
     - name: Deploy to GitHub Pages
       id: deployment
-      uses: actions/deploy-pages@v2
+      uses: actions/deploy-pages@v4
 ```
 
 {% endraw %}

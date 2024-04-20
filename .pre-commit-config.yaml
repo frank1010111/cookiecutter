@@ -6,25 +6,8 @@ ci:
 exclude: "^({{cookiecutter\\.project_name}}|hooks/pre_gen_project.py$)"
 
 repos:
-  - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: "23.7.0"
-    hooks:
-      - id: black-jupyter
-
-  - repo: https://github.com/asottile/blacken-docs
-    rev: "1.15.0"
-    hooks:
-      - id: blacken-docs
-        additional_dependencies: [black==23.7.0]
-
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.0.284"
-    hooks:
-      - id: ruff
-        args: ["--fix", "--show-fixes"]
-
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: "v4.4.0"
+    rev: "v4.6.0"
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -39,6 +22,19 @@ repos:
       - id: requirements-txt-fixer
       - id: trailing-whitespace
 
+  - repo: https://github.com/adamchainz/blacken-docs
+    rev: "1.16.0"
+    hooks:
+      - id: blacken-docs
+        additional_dependencies: [black==24.*]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: "v0.3.7"
+    hooks:
+      - id: ruff
+        args: ["--fix", "--show-fixes"]
+      - id: ruff-format
+
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: "v1.10.0"
     hooks:
@@ -47,7 +43,7 @@ repos:
       - id: rst-inline-touching-normal
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.5.0"
+    rev: "v1.9.0"
     hooks:
       - id: mypy
         files: "(src|tests)"
@@ -62,18 +58,18 @@ repos:
           - types-PyYAML
 
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v3.0.1"
+    rev: "v3.1.0"
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
         args: [--prose-wrap=always]
 
   - repo: https://github.com/codespell-project/codespell
-    rev: "v2.2.5"
+    rev: "v2.2.6"
     hooks:
       - id: codespell
         exclude: ^Gemfile\.lock$
-        args: ["-Lnd"]
+        args: ["-Lnd", "-w"]
 
   - repo: local
     hooks:

@@ -4,24 +4,29 @@ Nox runner for cookie & sp-repo-review.
 sp-repo-review checks start with "rr-".
 """
 
-
 from __future__ import annotations
 
 import difflib
+import email.message
+import functools
 import json
 import os
 import re
 import shutil
 import stat
 import sys
+import tarfile
 import urllib.request
+import zipfile
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import nox
 
-nox.needs_version = ">=2022.1.7"
+nox.needs_version = ">=2024.3.2"
 nox.options.sessions = ["rr_lint", "rr_tests", "rr_pylint", "readme"]
+nox.options.default_venv_backend = "uv|virtualenv"
 
 DIR = Path(__file__).parent.resolve()
 with DIR.joinpath("cookiecutter.json").open() as f:
@@ -243,11 +248,10 @@ def native(session: nox.Session, backend: str, vcs: bool) -> None:
     session.chdir(cookie)
 
     if backend == "hatch":
-        session.run(backend, "env", "create")
+        session.run(backend, "run", "test")
     else:
         session.run(backend, "install")
-
-    session.run(backend, "run", "pytest")
+        session.run(backend, "run", "pytest")
 
 
 @nox.session()
@@ -270,6 +274,27 @@ def dist(session: nox.Session, backend: str, vcs: bool) -> None:
         session.error(f"{wheel} must be version {expected_version}")
 
     session.run("twine", "check", f"{sdist}", f"{wheel}")
+
+    # Check for LICENSE in SDist
+    with tarfile.open(sdist) as tf:
+        names = tf.getnames()
+    if not any(n.endswith("LICENSE") for n in names):
+        msg = f"license file missing from {backend} vcs={vcs}'s sdist. Found: {names}"
+        session.error(msg)
+
+    # Check for LICENSE in wheel
+    with zipfile.ZipFile(wheel) as zf:
+        names = zf.namelist()
+        metadata_path = next(iter(n for n in names if n.endswith("METADATA")))
+        with zf.open(metadata_path) as mfile:
+            txt = mfile.read()
+    license_fields = email.message.EmailMessage(txt).get_all("License", [])
+    if license_fields:
+        msg = f"Should not have anything in the License slot, got {license_fields}"
+        session.error(msg)
+    if not any(n.endswith("LICENSE") for n in names):
+        msg = f"license file missing from {backend} vcs={vcs}'s wheel. Found: {names}"
+        session.error(msg)
 
     dist = DIR / "dist"
     dist.mkdir(exist_ok=True)
@@ -337,9 +362,9 @@ PC_VERS = re.compile(
     re.MULTILINE,
 )
 
-PC_REPL_LINE = '''\
+PC_REPL_LINE = """\
 {2}- repo: {0}
-{2}  rev: "{1}"'''
+{2}  rev: {3}{1}{3}"""
 
 
 GHA_VERS = re.compile(r"[\s\-]+uses: (.*?)@([^\s]+)")
@@ -350,7 +375,7 @@ def pc_bump(session: nox.Session) -> None:
     """
     Bump the pre-commit versions.
     """
-    session.install("lastversion")
+    session.install("lastversion>=3.4")
     versions = {}
     pages = [
         Path("docs/pages/guides/style.md"),
@@ -364,22 +389,49 @@ def pc_bump(session: nox.Session) -> None:
 
         for proj, (old_version, space) in old_versions.items():
             if proj not in versions:
-                versions[proj] = session.run("lastversion", proj, silent=True).strip()
+                versions[proj] = session.run(
+                    "lastversion",
+                    "--at=github",
+                    "--format=tag",
+                    "--exclude=~alpha|beta|rc",
+                    proj,
+                    silent=True,
+                ).strip()
             new_version = versions[proj]
 
-            if old_version.lstrip("v") == new_version:
-                continue
+            after = PC_REPL_LINE.format(proj, new_version, space, '"')
 
-            if old_version.startswith("v"):
-                new_version = f"v{new_version}"
-
-            before = PC_REPL_LINE.format(proj, old_version, space)
-            after = PC_REPL_LINE.format(proj, new_version, space)
-
-            session.log(f"Bump: {old_version} -> {new_version} ({page})")
-            txt = txt.replace(before, after)
+            session.log(f"Bump {proj}: {old_version} -> {new_version} ({page})")
+            txt = txt.replace(PC_REPL_LINE.format(proj, old_version, space, '"'), after)
+            txt = txt.replace(PC_REPL_LINE.format(proj, old_version, space, ""), after)
 
             page.write_text(txt)
+
+
+@functools.lru_cache(maxsize=None)  # noqa: UP033
+def get_latest_version_tag(repo: str, old_version: str) -> dict[str, Any] | None:
+    auth = os.environ.get("GITHUB_TOKEN", os.environ.get("GITHUB_API_TOKEN", ""))
+    request = urllib.request.Request(
+        f"https://api.github.com/repos/{repo}/tags?per_page=100"
+    )
+    request.add_header("Accept", "application/vnd.github+json")
+    request.add_header("X-GitHub-Api-Version", "2022-11-28")
+    if auth:
+        request.add_header("Authorization", f"Bearer: {auth}")
+    response = urllib.request.urlopen(request)
+    results = json.loads(response.read())
+    if not results:
+        msg = f"No results for {repo}"
+        raise RuntimeError(msg)
+    tags = [
+        x["name"]
+        for x in results
+        if x["name"].count(".") == old_version.count(".")
+        and x["name"].startswith("v") == old_version.startswith("v")
+    ]
+    if tags:
+        return tags[0]
+    return None
 
 
 @nox.session(venv_backend="none")
@@ -396,23 +448,12 @@ def gha_bump(session: nox.Session) -> None:
 
     # This assumes there is a single version per action
     old_versions = {m[1]: m[2] for m in GHA_VERS.finditer(full_txt)}
-    versions = {}
 
     for repo, old_version in old_versions.items():
         session.log(f"{repo}: {old_version}")
-        if repo not in versions:
-            response = urllib.request.urlopen(
-                f"https://api.github.com/repos/{repo}/tags"
-            )
-            versions[repo] = json.loads(response.read())
-        tags = [
-            x["name"]
-            for x in versions[repo]
-            if x["name"].count(".") == old_version.count(".")
-        ]
-        if not tags:
+        new_version = get_latest_version_tag(repo, old_version)
+        if not new_version:
             continue
-        new_version = tags[0]
         if new_version != old_version:
             session.log(f"Convert {repo}: {old_version} -> {new_version}")
             for page in pages:

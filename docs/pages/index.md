@@ -19,7 +19,7 @@ maintainable, reusable, and shareable form? Start at the
 **Learn recommended tools and best practices.** [Topical guides]({% link
 pages/guides/index.md %}) provide task-based instruction on topics that scientists
 and research software engineers may encounter as their projects evolve and grow.
-This covers modern packaging([simple][] or [compiled][]), [style checking][], [testing][],
+This covers modern packaging ([simple][] or [compiled][]), [style checking][], [testing][],
 [documentation][], [static typing][], [CI][], and much more!
 
 {: .highlight-title }
@@ -36,7 +36,7 @@ This covers modern packaging([simple][] or [compiled][]), [style checking][], [t
 > Checking an existing project
 >
 > We provide [sp-repo-review][], a set of [repo-review][] checks for comparing
-> your repository with the guidelines, runnable right in the guide via
+> your repository with the guidelines, runnable [right in the guide][] via
 > WebAssembly! All checks point to a linked badge in the guide.
 
 **Learn to write better research code.** A high-level document on
@@ -58,7 +58,7 @@ want info.
 
 This guide also does not cover version control, but it is essential to have a
 basic facility with git to use these tools successfully. We recommend the
-[Software Carpentry lesson on git](https://swcarpentry.github.io/git-novice/).
+[Software Carpentry lesson on Git](https://swcarpentry.github.io/git-novice/).
 
 {: .note-title }
 
@@ -68,10 +68,9 @@ basic facility with git to use these tools successfully. We recommend the
 > in 2020. It was merged with the [NSLS-II][] guidelines and moved to Scientific
 > Python at the [2023 Scientific Python Developer Summit][2023 spdev], along
 > with many updates. Improved support for compiled components supported in part
-> by NSF cooperative agreement [OAC-2209877][].
+> by NSF grant [OAC-2209877][].
 
 <!-- prettier-ignore-start -->
-[scientific-python/cookie]: https://github.com/scientific-python/cookie
 [simple]:                   {% link pages/guides/packaging_simple.md %}
 [compiled]:                 {% link pages/guides/packaging_compiled.md %}
 [style checking]:           {% link pages/guides/style.md %}
@@ -79,13 +78,16 @@ basic facility with git to use these tools successfully. We recommend the
 [documentation]:            {% link pages/guides/docs.md %}
 [static typing]:            {% link pages/guides/mypy.md %}
 [ci]:                       {% link pages/guides/gha_pure.md %}
-[sp-repo-review]:           {% link pages/guides/repo_review.md %}
+[right in the guide]:       {% link pages/guides/repo_review.md %}
+
+[scientific-python/cookie]: https://github.com/scientific-python/cookie
 [repo-review]:              https://repo-review.readthedocs.io
 [copier]:                   https://copier.readthedocs.io
 [cookiecutter]:             https://cookiecutter.readthedocs.io
 [cruft]:                    https://cruft.github.io/cruft
 [2023 spdev]:               https://scientific-python.org/summits/developer/2023
 [scikit-hep]:               https://scikit-hep.org
-[OAC-2209877]:              https://www.nsf.gov/awardsearch/showAward?AWD_ID=2209877&HistoricalAwards=false
+[OAC-2209877]:              https://www.nsf.gov/awardsearch/showAward?AWD_ID=2209877
 [nsls-ii]:                  https://nsls-ii.github.io
+[sp-repo-review]:           https://pypi.org/project/sp-repo-review
 <!-- prettier-ignore-end -->

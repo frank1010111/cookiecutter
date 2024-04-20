@@ -41,21 +41,22 @@ git init
 ```
 
 Within the package directory `example`, create subdirectories `src` ("source")
-for the source code.
+and `src/example` for the source code.
 
 ```bash
 mkdir src
+mkdir src/example
 ```
 
-Create a file at `src/__init__.py`. This is what identifies the directory as a
-"package" to Python. It may remain empty.
+Create a file at `src/example/__init__.py`. This is what identifies the
+directory as a "package" to Python. It may remain empty.
 
 ```bash
-touch src/__init__.py
+touch src/example/__init__.py
 ```
 
 Place `refraction.py`, our code from the previous section, next to it, at
-`src/refraction.py`.
+`src/example/refraction.py`.
 
 The last element your package needs is a `pyproject.toml` file, placed in the
 root directory.
@@ -112,22 +113,22 @@ re-installing it each time.
 Then, in a Python shell or Jupyter Notebook, import your package and call the
 function.
 
-```py
+```pycon
 >>> from example.refraction import snell
 >>> import numpy as np
->>> snell(np.pi/4, 1.00, 1.33)
+>>> snell(np.pi / 4, 1.00, 1.33)
 1.2239576240104186
 ```
 
 The docstring can be viewed with `help()`.
 
-```py
+```pycon
 >>> help(snell)
 ```
 
 Or, in Jupyter or Python, use `?` as a shortcut.
 
-```py
+```ipython
 In [1]: snell?
 ```
 

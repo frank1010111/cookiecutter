@@ -17,7 +17,7 @@ def workflows(root: Traversable) -> dict[str, Any]:
     workflows_dict: dict[str, Any] = {}
     if workflows_base_path.is_dir():
         for workflow_path in workflows_base_path.iterdir():
-            if workflow_path.name.endswith(".yml"):
+            if workflow_path.name.endswith((".yml", ".yaml")):
                 with workflow_path.open("rb") as f:
                     workflows_dict[Path(workflow_path.name).stem] = yaml.safe_load(f)
 
@@ -40,6 +40,7 @@ class GitHub:
 
 class GH100(GitHub):
     "Has GitHub Actions config"
+
     url = mk_url("gha-basic")
 
     @staticmethod
@@ -54,6 +55,7 @@ class GH100(GitHub):
 
 class GH101(GitHub):
     "Has nice names"
+
     requires = {"GH100"}
     url = mk_url("gha-basic")
 
@@ -68,6 +70,7 @@ class GH101(GitHub):
 
 class GH102(GitHub):
     "Auto-cancel on repeated PRs"
+
     requires = {"GH100"}
     url = mk_url("gha-basic")
 
@@ -87,6 +90,7 @@ class GH102(GitHub):
 
 class GH103(GitHub):
     "At least one workflow with manual dispatch trigger"
+
     requires = {"GH100"}
     url = mk_url("gha-basic")
 
@@ -103,8 +107,61 @@ class GH103(GitHub):
         return any("workflow_dispatch" in w.get(True, {}) for w in workflows.values())
 
 
+GH104_ERROR_MSG = """
+Multiple upload-artifact usages _must_ have unique names to be
+compatible with `v4` (which no longer merges artifacts, but instead
+errors out). The most general solution is:
+
+```yaml
+- uses: actions/upload-artifact@v4
+  with:
+    name: prefix-${{ github.job }}-${{ strategy.job-index }}
+
+- uses: actions/download-artifact@v4
+  with:
+    pattern: prefix-*
+    merge-multiple: true
+```
+
+"""
+
+
+class GH104(GitHub):
+    "Use unique names for upload-artifact"
+
+    requires = {"GH100"}
+    url = mk_url("gha-wheels")
+
+    @staticmethod
+    def check(workflows: dict[str, Any]) -> str:
+        errors = []
+        for wname, workflow in workflows.items():
+            for jname, job in workflow.get("jobs", {}).items():
+                names = [
+                    step.get("with", {}).get("name", "")
+                    for step in job.get("steps", [])
+                    if step.get("uses", "").startswith("actions/upload-artifact")
+                ]
+                if "matrix" in job.get("strategy", {}) and not all(
+                    "${{" in n for n in names
+                ):
+                    errors.append(
+                        f"* No variable substitutions were detected in `{wname}.yml:{jname}`."
+                    )
+                names = [n for n in names if "${{" not in n]
+                if len(names) != len(set(names)):
+                    errors.append(
+                        f"* Multiple matching upload artifact names detected in `{wname}.yml:{jname}`."
+                    )
+        if errors:
+            return GH104_ERROR_MSG + "\n\n".join(errors)
+        return ""
+
+
 class GH200(GitHub):
     "Maintained by Dependabot"
+
+    requires = {"GH100"}
     url = mk_url("gha-basic")
 
     @staticmethod
@@ -128,6 +185,7 @@ class GH200(GitHub):
 
 class GH210(GitHub):
     "Maintains the GitHub action versions with Dependabot"
+
     requires = {"GH200"}
     url = mk_url("gha-basic")
 
@@ -143,7 +201,11 @@ class GH210(GitHub):
           - package-ecosystem: "github-actions"
             directory: "/"
             schedule:
-            interval: "weekly"
+              interval: "weekly"
+            groups:
+              actions:
+                patterns:
+                  - "*"
         ```
         """
         for ecosystem in dependabot.get("updates", []):
@@ -154,6 +216,7 @@ class GH210(GitHub):
 
 class GH211(GitHub):
     "Do not pin core actions as major versions"
+
     requires = {"GH200", "GH210"}  # Currently listing both helps - TODO: remove GH200
     url = mk_url("gha-basic")
 
@@ -169,6 +232,35 @@ class GH211(GitHub):
                 for ignore in ecosystem.get("ignore", []):
                     if "actions/*" in ignore.get("dependency-name", ""):
                         return False
+        return True
+
+
+class GH212(GitHub):
+    "Require GHA update grouping"
+
+    requires = {"GH200", "GH210"}
+    url = mk_url("gha-basic")
+
+    @staticmethod
+    def check(dependabot: dict[str, Any]) -> bool:
+        """
+        Projects should group their updates to avoid extra PRs and stay in sync.
+        This is now supported by dependabot since June 2023.
+
+        ```yaml
+            groups:
+              actions:
+                patterns:
+                  - "*"
+        ```
+        """
+
+        for ecosystem in dependabot.get("updates", []):
+            if (
+                ecosystem.get("package-ecosystem", "") == "github-actions"
+                and "groups" not in ecosystem
+            ):
+                return False
         return True
 
 

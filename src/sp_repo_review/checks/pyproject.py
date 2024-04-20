@@ -59,9 +59,9 @@ class PP301(PyProject):
     @staticmethod
     def check(pyproject: dict[str, Any]) -> bool:
         """
-        Must have a pytest configuration section in pyproject.toml. If you must
-        have it somewhere else (such as to support `pytest<6`), ignore this
-        check.
+        Must have a `[tool.pytest.ini_options]` configuration section in
+        pyproject.toml. If you must have it somewhere else (such as to support
+        `pytest<6`), ignore this check.
         """
 
         match pyproject:
@@ -73,6 +73,7 @@ class PP301(PyProject):
 
 class PP302(PyProject):
     "Sets a minimum pytest to at least 6"
+
     requires = {"PP301"}
     url = mk_url("pytest")
 
@@ -81,32 +82,55 @@ class PP302(PyProject):
         """
         Must have a `minversion=`, and must be at least 6 (first version to
         support `pyproject.toml` configuration).
+
+        ```toml
+        [tool.pytest.ini_options]
+        minversion = "7"
+        ```
         """
         options = pyproject["tool"]["pytest"]["ini_options"]
-        return "minversion" in options and float(options["minversion"]) >= 6
+        return (
+            "minversion" in options
+            and int(str(options["minversion"]).split(".")[0]) >= 6
+        )
 
 
 class PP303(PyProject):
     "Sets the test paths"
+
     requires = {"PP301"}
     url = mk_url("pytest")
 
     @staticmethod
     def check(pyproject: dict[str, Any]) -> bool:
-        "The `testpaths` setting should be set (like to `['tests']`)"
+        """
+        The `testpaths` setting should be set to a reasonable default.
+
+        ```toml
+        [tool.pytest.ini_options]
+        testpaths = ["tests"]
+        ```
+        """
         options = pyproject["tool"]["pytest"]["ini_options"]
         return "testpaths" in options
 
 
 class PP304(PyProject):
     "Sets the log level in pytest"
+
     requires = {"PP301"}
     url = mk_url("pytest")
 
     @staticmethod
     def check(pyproject: dict[str, Any]) -> bool:
         """
-        `log_cli_level` should be set (probably to `"INFO"`)
+        `log_cli_level` should be set. This will allow logs to be displayed on
+        failures.
+
+        ```toml
+        [tool.pytest.ini_options]
+        log_cli_level = "INFO"
+        ```
         """
         options = pyproject["tool"]["pytest"]["ini_options"]
         return "log_cli_level" in options
@@ -114,14 +138,20 @@ class PP304(PyProject):
 
 class PP305(PyProject):
     "Specifies xfail_strict"
+
     requires = {"PP301"}
     url = mk_url("pytest")
 
     @staticmethod
     def check(pyproject: dict[str, Any]) -> bool:
         """
-        `xfail_strict` should be set (probably to `true`). You can manually
-        specify if a check should be strict when setting each xfail.
+        `xfail_strict` should be set. You can manually specify if a check
+        should be strict when setting each xfail.
+
+        ```toml
+        [tool.pytest.ini_options]
+        xfail_strict = true
+        ```
         """
         options = pyproject["tool"]["pytest"]["ini_options"]
         return "xfail_strict" in options
@@ -129,6 +159,7 @@ class PP305(PyProject):
 
 class PP306(PyProject):
     "Specifies strict config"
+
     requires = {"PP301"}
     url = mk_url("pytest")
 
@@ -137,6 +168,11 @@ class PP306(PyProject):
         """
         `--strict-config` should be in `addopts = [...]`. This forces an error
         if a config setting is misspelled.
+
+        ```toml
+        [tool.pytest.ini_options]
+        addopts = ["-ra", "--strict-config", "--strict-markers"]
+        ```
         """
         options = pyproject["tool"]["pytest"]["ini_options"]
         return "--strict-config" in options.get("addopts", [])
@@ -144,6 +180,7 @@ class PP306(PyProject):
 
 class PP307(PyProject):
     "Specifies strict markers"
+
     requires = {"PP301"}
     url = mk_url("pytest")
 
@@ -152,6 +189,11 @@ class PP307(PyProject):
         """
         `--strict-markers` should be in `addopts = [...]`. This forces all
         markers to be specified in config, avoiding misspellings.
+
+        ```toml
+        [tool.pytest.ini_options]
+        addopts = ["-ra", "--strict-config", "--strict-markers"]
+        ```
         """
         options = pyproject["tool"]["pytest"]["ini_options"]
         return "--strict-markers" in options.get("addopts", [])
@@ -159,26 +201,41 @@ class PP307(PyProject):
 
 class PP308(PyProject):
     "Specifies useful pytest summary"
-    requires = {"PP301"}
-    url = mk_url("pytest")
 
-    @staticmethod
-    def check(pyproject: dict[str, Any]) -> bool:
-        "`-ra` should be in `addopts = [...]` (print summary of all fails/errors)."
-        options = pyproject["tool"]["pytest"]["ini_options"]
-        return "-ra" in options.get("addopts", [])
-
-
-class PP309(PyProject):
-    "Filter warnings specified"
     requires = {"PP301"}
     url = mk_url("pytest")
 
     @staticmethod
     def check(pyproject: dict[str, Any]) -> bool:
         """
-        `filterwarnings` must be set (probably to at least `['error']`). Python
+        An explicit summary flag like `-ra` should be in `addopts = [...]`
+        (print summary of all fails/errors).
+
+        ```toml
+        [tool.pytest.ini_options]
+        addopts = ["-ra", "--strict-config", "--strict-markers"]
+        ```
+        """
+        options = pyproject["tool"]["pytest"]["ini_options"]
+        return any(opt.startswith("-r") for opt in options.get("addopts", []))
+
+
+class PP309(PyProject):
+    "Filter warnings specified"
+
+    requires = {"PP301"}
+    url = mk_url("pytest")
+
+    @staticmethod
+    def check(pyproject: dict[str, Any]) -> bool:
+        """
+        `filterwarnings` must be set (probably to at least `["error"]`). Python
         will hide important warnings otherwise, like deprecations.
+
+        ```toml
+        [tool.pytest.ini_options]
+        filterwarnings = ["error"]
+        ```
         """
         options = pyproject["tool"]["pytest"]["ini_options"]
         return "filterwarnings" in options

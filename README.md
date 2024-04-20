@@ -65,7 +65,8 @@ During generation you can select from the following backends for your package:
     versioning) **(Recommended for Rust projects)**
 
 Currently, the best choice is probably hatch for pure Python projects, and
-setuptools (such as the pybind11 choice) for binary projects.
+scikit-build (such as the scikit-build-core + pybind11 choice) for binary
+projects.
 
 #### To use (modern copier version)
 
@@ -136,8 +137,7 @@ backports structure with a small typing example.
 - Formatting handled by pre-commit
   - No reason not to be strict on a new project; remove what you don't want.
   - Includes MyPy - static typing
-  - Includes Black - standardizing formatting
-  - Includes strong Ruff-based linting and autofixes
+  - Includes Ruff - standard formatting, linting and autofixes
     - Replaces Flake8, isort, pyupgrade, yesqa, pycln, and dozens of plugins
   - Includes spell checking
 - An pylint nox target can be used to run pylint, which integrated GHA
@@ -283,8 +283,11 @@ Or pre-commit:
   rev: <version>
   hooks:
     - id: sp-repo-review
-      additional_dependencies: ["repo-review[cli]"]
 ```
+
+If you use `additional_dependencies` to add more plugins, like
+`validate-pyproject`, you should also include `"repo-review[cli]"` to ensure the
+CLI requirements are included.
 
 ## List of checks
 
@@ -341,14 +344,16 @@ for family, grp in itertools.groupby(collected.checks.items(), key=lambda x: x[1
 - [`GH101`](https://learn.scientific-python.org/development/guides/gha-basic#GH101): Has nice names
 - [`GH102`](https://learn.scientific-python.org/development/guides/gha-basic#GH102): Auto-cancel on repeated PRs
 - [`GH103`](https://learn.scientific-python.org/development/guides/gha-basic#GH103): At least one workflow with manual dispatch trigger
+- [`GH104`](https://learn.scientific-python.org/development/guides/gha-wheels#GH104): Use unique names for upload-artifact
 - [`GH200`](https://learn.scientific-python.org/development/guides/gha-basic#GH200): Maintained by Dependabot
 - [`GH210`](https://learn.scientific-python.org/development/guides/gha-basic#GH210): Maintains the GitHub action versions with Dependabot
 - [`GH211`](https://learn.scientific-python.org/development/guides/gha-basic#GH211): Do not pin core actions as major versions
+- [`GH212`](https://learn.scientific-python.org/development/guides/gha-basic#GH212): Require GHA update grouping
 
 ### MyPy
 - [`MY100`](https://learn.scientific-python.org/development/guides/style#MY100): Uses MyPy (pyproject config)
 - [`MY101`](https://learn.scientific-python.org/development/guides/style#MY101): MyPy strict mode
-- [`MY102`](https://learn.scientific-python.org/development/guides/style#MY102): MyPy show error codes
+- `MY102`: MyPy show_error_codes deprecated
 - [`MY103`](https://learn.scientific-python.org/development/guides/style#MY103): MyPy warn unreachable
 - [`MY104`](https://learn.scientific-python.org/development/guides/style#MY104): MyPy enables ignore-without-code
 - [`MY105`](https://learn.scientific-python.org/development/guides/style#MY105): MyPy enables redundant-expr
@@ -356,7 +361,7 @@ for family, grp in itertools.groupby(collected.checks.items(), key=lambda x: x[1
 
 ### Pre-commit
 - [`PC100`](https://learn.scientific-python.org/development/guides/style#PC100): Has pre-commit-hooks
-- [`PC110`](https://learn.scientific-python.org/development/guides/style#PC110): Uses black
+- [`PC110`](https://learn.scientific-python.org/development/guides/style#PC110): Uses black or ruff-format
 - [`PC111`](https://learn.scientific-python.org/development/guides/style#PC111): Uses blacken-docs
 - [`PC140`](https://learn.scientific-python.org/development/guides/style#PC140): Uses mypy
 - [`PC160`](https://learn.scientific-python.org/development/guides/style#PC160): Uses codespell
@@ -373,6 +378,8 @@ for family, grp in itertools.groupby(collected.checks.items(), key=lambda x: x[1
 - [`RF101`](https://learn.scientific-python.org/development/guides/style#RF101): Bugbear must be selected
 - [`RF102`](https://learn.scientific-python.org/development/guides/style#RF102): isort must be selected
 - [`RF103`](https://learn.scientific-python.org/development/guides/style#RF103): pyupgrade must be selected
+- `RF201`: Avoid using deprecated config settings
+- `RF202`: Use (new) lint config section
 
 <!-- [[[end]]] -->
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from .._compat.importlib.resources.abc import Traversable
 from . import mk_url
 
@@ -13,6 +15,7 @@ class General:
 
 class PY001(General):
     "Has a pyproject.toml"
+
     url = mk_url("packaging-simple")
 
     @staticmethod
@@ -26,6 +29,7 @@ class PY001(General):
 
 class PY002(General):
     "Has a README.(md|rst) file"
+
     url = mk_url("packaging-simple")
 
     @staticmethod
@@ -39,16 +43,23 @@ class PY002(General):
 
 class PY003(General):
     "Has a LICENSE* file"
+
     url = mk_url("packaging-simple")
 
     @staticmethod
     def check(package: Traversable) -> bool:
         "Projects must have a license"
-        return len([p for p in package.iterdir() if "LICENSE" in p.name]) > 0
+        spellings = ("LICENSE", "LICENCE", "COPYING")
+        return any(
+            p.name.startswith(spelling)
+            for p in package.iterdir()
+            for spelling in spellings
+        )
 
 
 class PY004(General):
     "Has docs folder"
+
     url = mk_url("packaging-simple")
 
     @staticmethod
@@ -59,6 +70,7 @@ class PY004(General):
 
 class PY005(General):
     "Has tests folder"
+
     url = mk_url("packaging-simple")
 
     @staticmethod
@@ -79,6 +91,7 @@ class PY005(General):
 
 class PY006(General):
     "Has pre-commit config"
+
     url = mk_url("style")
 
     @staticmethod
@@ -89,16 +102,29 @@ class PY006(General):
 
 class PY007(General):
     "Supports an easy task runner (nox or tox)"
+
     url = mk_url("tasks")
 
     @staticmethod
-    def check(root: Traversable) -> bool:
+    def check(root: Traversable, pyproject: dict[str, Any]) -> bool:
         """
-        Projects must have a `noxfile.py` or `tox.ini` to encourage new contributors.
+        Projects must have a `noxfile.py`, `tox.ini`, or
+        `tool.hatch.envs`/`tool.spin`/`tool.tox` in `pyproject.toml` to encourage new
+        contributors.
         """
-        return (
-            root.joinpath("noxfile.py").is_file() or root.joinpath("tox.ini").is_file()
-        )
+        if root.joinpath("noxfile.py").is_file():
+            return True
+        if root.joinpath("tox.ini").is_file():
+            return True
+        match pyproject.get("tool", {}):
+            case {"hatch": {"envs": object()}}:
+                return True
+            case {"spin": object()}:
+                return True
+            case {"tox": object()}:
+                return True
+            case _:
+                return False
 
 
 def repo_review_checks() -> dict[str, General]:

@@ -70,15 +70,16 @@ the name "CI/CD", you can just combine the two `on` dicts.
 dist:
   runs-on: ubuntu-latest
   steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
     - name: Build SDist and wheel
       run: pipx run build
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
+        name: Packages
         path: dist/*
 
     - name: Check metadata
@@ -104,6 +105,11 @@ GitHub Actions (in fact, they use it to setup other applications).
 We upload the artifact just to make it available via the GitHub PR/Checks API.
 You can download a file to test locally if you want without making a release.
 
+{: .warning }
+
+> As of `upload-artifact@v4`, the artifact name must be unique. Extending an
+> existing artifact is no longer supported.
+
 We also add an optional check using twine for the metadata (it will be tested
 later in the upload action for the release job, as well).
 
@@ -118,12 +124,12 @@ later in the upload action for the release job, as well).
 >
 > ```yaml
 > steps:
->   - uses: actions/checkout@v3
->   - uses: hynek/build-and-inspect-python-package@v1
+>   - uses: actions/checkout@v4
+>   - uses: hynek/build-and-inspect-python-package@v2
 > ```
 >
 > The artifact it produces is named `Packages`, so that's what you need to use
-> later to publish.
+> later to publish. This will be used instead of the manual steps below.
 
 And then, you need a release job:
 
@@ -140,9 +146,9 @@ publish:
   runs-on: ubuntu-latest
   if: github.event_name == 'release' && github.event.action == 'published'
   steps:
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
-        name: artifact
+        name: Packages
         path: dist
 
     - uses: pypa/gh-action-pypi-publish@release/v1
@@ -166,9 +172,9 @@ publish:
   runs-on: ubuntu-latest
   if: github.event_name == 'release' && github.event.action == 'published'
   steps:
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
-        name: artifact
+        name: Packages
         path: dist
 
     - uses: pypa/gh-action-pypi-publish@release/v1
@@ -201,6 +207,7 @@ name: CD
 
 on:
   workflow_dispatch:
+  pull_request:
   push:
     branches:
       - main
@@ -212,11 +219,11 @@ jobs:
   dist:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: hynek/build-and-inspect-python-package@v1
+      - uses: hynek/build-and-inspect-python-package@v2
 
   publish:
     needs: [dist]
@@ -227,9 +234,9 @@ jobs:
     if: github.event_name == 'release' && github.event.action == 'published'
 
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
-          name: artifact
+          name: Packages
           path: dist
 
       - uses: pypa/gh-action-pypi-publish@release/v1
@@ -246,6 +253,7 @@ name: CD
 
 on:
   workflow_dispatch:
+  pull_request:
   push:
     branches:
       - main
@@ -257,11 +265,11 @@ jobs:
   dist:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: hynek/build-and-inspect-python-package@v1
+      - uses: hynek/build-and-inspect-python-package@v2
 
   publish:
     needs: [dist]
@@ -269,7 +277,7 @@ jobs:
     if: github.event_name == 'release' && github.event.action == 'published'
 
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: Packages
           path: dist

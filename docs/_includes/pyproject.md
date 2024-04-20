@@ -7,6 +7,7 @@ The metadata is specified in a [standards-based][metadata] format:
 name = "package"
 description = "A great package."
 readme = "README.md"
+license.file = "LICENSE"
 authors = [
   { name = "My Name", email = "me@email.com" },
 ]
@@ -76,7 +77,7 @@ to add a `script` entry point. The form is:
 
 ```toml
 [project.scripts]
-cliapp = "packakge.__main__:main"
+cliapp = "package.__main__:main"
 ```
 
 The format is command line app name as the key, and the value is the path to the
