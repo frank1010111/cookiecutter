@@ -111,7 +111,7 @@ Here is the snippet to add the formatter to your `.pre-commit-config.yml`
 
 ```yaml
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.4.4"
+  rev: "v0.5.0"
   hooks:
     #  id: ruff would go here if using both
     - id: ruff-format
@@ -180,7 +180,7 @@ markdown and restructured text. Note that because black is in
 
 ```yaml
 - repo: https://github.com/adamchainz/blacken-docs
-  rev: "1.16.0"
+  rev: "1.18.0"
   hooks:
     - id: blacken-docs
       additional_dependencies: [black==24.*]
@@ -201,7 +201,7 @@ pre-commit hook.
 
 ```yaml
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.4.4"
+  rev: "v0.5.0"
   hooks:
     - id: ruff
       args: ["--fix", "--show-fixes"]
@@ -392,7 +392,7 @@ the flake8 addition for pre-commit, with the `bugbear` plugin:
 
 ```yaml
 - repo: https://github.com/pycqa/flake8
-  rev: "7.0.0"
+  rev: "7.1.0"
   hooks:
     - id: flake8
       additional_dependencies: [flake8-bugbear]
@@ -490,7 +490,7 @@ when clearly better (please always use them, they are faster) if you set
 
 ```yaml
 - repo: https://github.com/asottile/pyupgrade
-  rev: "v3.15.2"
+  rev: "v3.16.0"
   hooks:
     - id: pyupgrade
       args: ["--py38-plus"]
@@ -535,7 +535,7 @@ The MyPy addition for pre-commit:
 
 ```yaml
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: "v1.10.0"
+  rev: "v1.10.1"
   hooks:
     - id: mypy
       files: src
@@ -665,7 +665,7 @@ than a list of "valid" words. To use:
 
 ```yaml
 - repo: https://github.com/codespell-project/codespell
-  rev: "v2.2.6"
+  rev: "v2.3.0"
   hooks:
     - id: codespell
       args: ["-L", "sur,nd"]
@@ -747,7 +747,7 @@ following pre-commit config:
 
 ```yaml
 - repo: https://github.com/pre-commit/mirrors-clang-format
-  rev: "v18.1.5"
+  rev: "v18.1.8"
   hooks:
     - id: clang-format
       types_or: [c++, c, cuda]
@@ -810,7 +810,7 @@ can even get all [SchemaStore][]'s plugins with the
 
 ```yaml
 - repo: https://github.com/abravalheri/validate-pyproject
-  rev: "v0.17"
+  rev: "v0.18"
   hooks:
     - id: validate-pyproject
       additional_dependencies: ["validate-pyproject-schema-store[all]"]
@@ -824,7 +824,7 @@ schemas, and you can load them via URL. It work on JSON, YAML, and TOML.
 
 ```yaml
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: "0.28.3"
+  rev: "0.28.6"
   hooks:
     - id: check-dependabot
     - id: check-github-workflows
